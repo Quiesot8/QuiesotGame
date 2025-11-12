@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>🔥 Битва за Эридорию</title>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
+  <style>
+    body {
+      font-family: monospace;
+      background-color: #0e0e0e;
+      color: #eee;
+      padding: 20px;
+    }
+    textarea {
+      width: 100%;
+      height: 250px;
+      background-color: #1b1b1b;
+      color: #fff;
+      border: none;
+      padding: 10px;
+      font-size: 14px;
+      resize: vertical;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #2e8b57;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+    }
+    pre {
+      background-color: #111;
+      padding: 10px;
+      margin-top: 10px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>⚔️ Битва за Эридорию</h1>
+  <p>Нажми "▶ Запустить", чтобы увидеть исход битвы.</p>
+
+  <textarea id="code" style="display: none;">
+    import random
+
+    class Hero:
+        def __init__(self, name, health, armor, power):
+            self.name = name
+            self.health = health
+            self.armor = armor
+            self.power = power
+    
+    class Warrior(Hero):
+        def __init__(self, name, health, armor, power):
+            super().__init__(name, health, armor, power)
+            self.damage_reduction_turns = 0
+            self.magik_horror = 0
+    
+        def attack(self, enemy):
+            if isinstance(enemy, Lich) and enemy.skeleton and enemy.skeleton.health > 0:
+                damage = self.power - int(self.power / enemy.skeleton.armor)
+                enemy.skeleton.health -= damage
+                print('⚔️', self.name, 'атакует скелета!')
+                print('❤ Уровень здоровья', enemy.skeleton.name, 'снизился до', enemy.skeleton.health, '\n')
+                if enemy.skeleton and enemy.skeleton.health <= 0:
+                    print('✕', enemy.skeleton.name, 'погиб в бою! ✕', '\n')
+    
+            print('-----------> УДАР! ')
+            print('⚔️', self.name, 'атакует', enemy.name, '\n')
+    
+            if self.damage_reduction_turns > 0:
+                self.damage_reduction_turns -= 1
+                if self.damage_reduction_turns == 0:
+                    self.power /= 0.75
+                    print(self.name, 'восстанавливает свой урон!')
+    
+            if self.magik_horror == 0:
+                if random.random() <= 0.25:
+                    self.crit(enemy)
+                else:
+                    damage = self.power - int(self.power / enemy.armor)
+                    enemy.health -= damage
+    
+                if random.random() <= 0.5:
+                    self.healing()
+    
+                if isinstance(enemy, DeadKnight):
+                    if random.random() <= 0.5:
+                        enemy.ContrAttack(self)
+    
+            else:
+                self.magik_horror -= 1
+                print(self.name, 'пропускает ход!')
+                print('⚔️', enemy.name, 'наносит урон!')
+                damage = enemy.power - int(enemy.power / self.armor)
+                self.health -= damage
+                print('Уровень здоровья', self.name, 'снизился до', self.health, '\n')
+                if self.health <= 0:
+                    print('✕ Храбрый рыцарь', self.name, 'погиб в бою! ✕')
+                    return True
+    
+            print('❤ Уровень здоровья', enemy.name, 'снизился до', enemy.health, '\n')
+            if enemy.health <= 0:
+                print('✕ Враг', enemy.name, 'погиб в бою! ✕\n')
+                self.health = 500
+                if isinstance(enemy, Lich):
+                    print('Победа! Рыцарь одержал победу над Армией нежити и спас королевство от тьмы!')
+                    print('Королевство было спасено, и народ радуется победе рыцаря!')
+                    print('Рыцарь стал легендой, и его имя будут помнить вечно!')
+                return True
+    
+            return False
+    
+        def healing(self):
+            self.heal = 25
+            self.health += self.heal
+            print('★', self.name, 'использует зелье исцеления и восстанавливает',self.heal,'здоровье! Уровень здоровья', self.name, 'равен' ,self.health)
+    
+        def crit(self, enemy):
+            damage = self.power * 2 - int(self.power / enemy.armor)
+            enemy.health -= damage
+            print('★', self.name, 'Наносит крит урон!')
+    
+        def fight(self, enemies):
+            for enemy in enemies:
+                enemy.hello()
+                while self.health > 0 and enemy.health > 0:
+                    if random.randint(0, 1) == 1:
+                        if self.attack(enemy):
+                            break
+                    else:
+                        enemy.attack(self)
+                        if self.health <= 0:
+                            print('✕ Храбрый рыцарь', self.name, 'погиб в бою! ✕')
+                            return
+                if self.health <= 0:
+                    break
+    
+    class Ghost(Hero):
+        def hello(self):
+            print('Первым на его пути встал призрак, его глаза горели злобным огнем, а голос был подобен холодному ветру, когда он произнес: "Твоя душа будет моей"\n.')
+            print('Статы Призрака:\n▷Здровье:',self.health,'\n▷Броня:',self.armor,'\n▷Урон:',self.power,'\n')
+    
+        def attack(self, enemy):
+            print('-----------> УДАР! ')
+            print('⚔️', self.name, 'атакует', enemy.name, '\n')
+            self.horror(enemy)
+            damage = self.power - int(self.power / enemy.armor)
+            enemy.health -= damage
+            print('❤ Уровень здоровья', enemy.name, 'снизился до', enemy.health, '\n')
+            if enemy.health <= 0:
+                return True
+    
+            return False
+    
+        def horror(self, enemy):
+            if random.random() <= 0.3:
+                enemy.magik_horror = 4
+                print('★', self.name, 'наложил заклятие "страх"!', enemy.name, 'не сможет атаковать 4 хода!')
+    
+        def Disembodied(self, enemy):
+            print('★', enemy.name, 'промахивается по', self.name)
+    
+    class Ghoul(Hero):
+        def __init__(self, name, health, armor, power):
+            super().__init__(name, health, armor, power)
+            self.open_wound = 0
+    
+        def hello(self):
+            print('Следующим врагом, вставшим на пути, был гуль, его тело было рваными ранами, а из его рта текла кровь, когда он рвал воздух воплем: "Я разорву твою плоть на куски!"\n')
+            print('Статы Гуля:\n▷Здровье:',self.health,'\n▷Броня:',self.armor,'\n▷Урон:',self.power,'\n')
+    
+        def attack(self, enemy):
+            print('-----------> УДАР! ')
+            print('⚔️', self.name, 'атакует', enemy.name, '\n')
+            self.OpenWound(enemy)
+            if self.open_wound > 0:
+                self.CorpseEater(enemy)
+            else:
+                damage = self.power - int(self.power / enemy.armor)
+                enemy.health -= damage
+            print('❤ Уровень здоровья', enemy.name, 'снизился до', enemy.health, '\n')
+            if enemy.health <= 0:
+                return True
+    
+            return False
+    
+        def OpenWound(self, enemy):
+            if self.open_wound > 0:
+                damage = int(enemy.health * 0.02)
+                enemy.health -= damage
+                self.open_wound -= 1
+            else:
+                if random.random() <= 0.3:
+                    print('★ Гуль наносит открытую рану, герой будет терять часть здоровья в течение 3 ходов, а атаки гуля стали сильнее!')
+                    self.open_wound = 3
+    
+        def CorpseEater(self, enemy):
+            damage = self.power - int(self.power / enemy.armor) + int(self.power * 0.15)
+            enemy.health -= damage
+            self.health += int(damage * 0.1)
+            self.open_wound -= 1
+    
+    class Dragon(Hero):
+        def hello(self):
+            print('Теперь на пути героя вышел драколич, его тело было покрыто чешуей, а глаза горели яростным пламенем\n')
+            print('Статы Драколича:\n▷Здровье:',self.health,'\n▷Броня:',self.armor,'\n▷Урон:',self.power,'\n')
+    
+        def attack(self, enemy):
+            print('-----------> УДАР! ')
+            print('⚔️', self.name, 'атакует', enemy.name, '\n')
+            self.debuff(enemy)
+            if random.random() <= 0.4:
+                self.NoneArmor(enemy)
+                print('★ Драколич игнорирует защиту героя и наносит чистый урон, равный', self.power)
+            else:
+                damage = self.power - int(self.power / enemy.armor)
+                enemy.health -= damage
+            print('❤ Уровень здоровья', enemy.name, 'снизился до', enemy.health, '\n')
+            if enemy.health <= 0:
+                return True
+    
+            return False
+    
+        def debuff(self, enemy):
+            if random.random() <= 0.3:
+                enemy.damage_reduction_turns = 2
+                enemy.power *= 0.75
+                print('★', self.name, 'уменьшает урон', enemy.name, 'на 25%!')
+            else:
+                enemy.power = enemy.power
+    
+        def NoneArmor(self, enemy):
+            damage = self.power
+            enemy.health -= damage
+    
+    class Vampire(Hero):
+        def hello(self):
+            print('Следующим врагом был вампир, его голос был подобен шепоту смерти, когда он произнес: "Я выпью твою кровь и сделаю тебя одним из нас"\n')
+            print('Статы Вампира:\n▷Здровье:',self.health,'\n▷Броня:',self.armor,'\n▷Урон:',self.power,'\n')
+    
+        def attack(self, enemy):
+            print('-----------> УДАР! ')
+            print('⚔️', self.name, 'атакует', enemy.name, '\n')
+            self.Vampirism()
+            damage = self.power - int(self.power / enemy.armor)
+            enemy.health -= damage
+            print('❤ Уровень здоровья', enemy.name, 'снизился до', enemy.health, '\n')
+            print('★ Вампир восстановил своё здоровье на 15 единиц!')
+            if enemy.health <= 0:
+                return True
+    
+            return False
+    
+        def Vampirism(self):
+            self.health += 15
+    
+    class DeadKnight(Hero):
+        def hello(self):
+            print('Подойдя к воротам замка, на встречу герою вышел рыцарь смерти, он был одет в чёрную броню. Он произнес: "Я приведу тебя к вратам смерти и оставлю тебя там навечно".\n')
+            print('Статы Рыцаря Смерти:\n▷Здровье:',self.health,'\n▷Броня:',self.armor,'\n▷Урон:',self.power,'\n')
+    
+        def attack(self, enemy):
+            print('-----------> УДАР! ')
+            print('⚔️', self.name, 'атакует', enemy.name, '\n')
+            damage = self.power - int(self.power / enemy.armor)
+            enemy.health -= damage
+            print('❤ Уровень здоровья', enemy.name, 'снизился до', enemy.health, '\n')
+            if enemy.health <= 0:
+                return True
+    
+            return False
+    
+        def ContrAttack(self, enemy):
+            damage = self.power - int(self.power / enemy.armor)
+            enemy.health -= damage
+            print('★', self.name, 'наносит контр удар!')
+            print('Уровень здоровья', enemy.name, 'снизился до', enemy.health, '\n')
+    
+    class Skeleton(Hero):
+        def __init__(self, name, health, armor, power):
+            super().__init__(name, health, armor, power)
+    
+    class Lich(Hero):
+        def hello(self):
+            print('Войдя в замок, герой встретил могушественного мага-некроманта Лича, который возглавлял всю армию нежити. С его ледяным взглядом Лич вызывал жуткий страх, но в сердце Рыцаря горел огонь решимости. Лич произнес: "Я уничтожу твою душу и сделаю тебя частью моей армии".\n')
+            print('Статы Лича:\n▷Здровье:',self.health,'\n▷Броня:',self.armor,'\n▷Урон:',self.power,'\n')
+    
+        def __init__(self, name, health, armor, power):
+            super().__init__(name, health, armor, power)
+            self.poison_turns = 0
+            self.skeleton = None
+    
+        def attack(self, enemy):
+            print('-----------> УДАР! ')
+            print('⚔️', self.name, 'атакует', enemy.name, '\n')
+            self.summon_skeleton()
+            self.poison(enemy)
+    
+            if self.skeleton and self.skeleton.health > 0:
+                print(self.skeleton.name, 'наносит урон!')
+                damage = self.power - int(self.skeleton.power / enemy.armor)
+                enemy.health -= damage
+    
+            damage = self.power - int(self.power / enemy.armor)
+            enemy.health -= damage
+            print('❤ Уровень здоровья', enemy.name, 'снизился до', enemy.health, '\n')
+            if enemy.health <= 0:
+                return True
+    
+            return False
+    
+        def poison(self, enemy):
+            if self.poison_turns > 0:
+                damage = self.power + 10
+                enemy.health -= damage
+                print('★ Яд наносит урон! Дополнительный урон:', 10)
+                self.poison_turns -= 1
+            else:
+                if random.random() <= 0.3:
+                    self.poison_turns = 3
+    
+        def summon_skeleton(self):
+            if self.skeleton is None:
+                self.skeleton = Skeleton('Скелет', 50, 5, 15)
+                print('★', self.name, 'вызывает скелета!')
+    
+    enemies = [
+        Ghost('Призрак', 75, 10, 15),
+        Ghoul('Гуль', 250, 10, 30),
+        Dragon('Драколич', 400, 30, 50),
+        Vampire('Вампир', 100, 20, 30),
+        DeadKnight('Рыцарь смерти', 250, 45, 50),
+        Lich('Лич', 150, 20, 50)
+    ]
+    
+    warrior = Warrior('Арин', 500, 35, 45)
+    print('ПРОЛОГ')
+    print(' Королевство Эридория, некогда символ надежды, теперь лежало в руинах.\n',
+    'Орды нежити, восставшие из подземного мира, уничтожали все на своем пути, а число рыцарей стремительно уменьшалось.\n',
+    'Остался только один: сэр Арин Непреклонный, воин мужества и преданности, готовый бросить вызов нежити в одиночку.\n',
+    'Его доспехи, потрепанные и изношенные, все еще сияли слабым светом, как символ надежды.\n',
+    'Судьба Эридории висела на волоске, поскольку армия нежити, возглавляемая Личом Сандро, готовилась нанести последний удар.\n',
+    'Предстоящая битва будет ожесточенной, шансы против него будут подавляющими, но он знал, что он был единственным, кто мог спасти Эридорию из лап нежити.\n',
+    'Судьба королевства лежала на его плечах, и он был готов встретить лицом к лицу любые ужасы, ожидавшие его впереди.\n')
+    print('Статы рыцаря:\n▷Здровье:',warrior.health,'\n▷Броня:',warrior.armor,'\n▷Урон:',warrior.power,'\n')
+    warrior.fight(enemies)
+  </textarea>
+  <br>
+  <button id="run">▶ Запустить</button>
+
+  <pre id="output"></pre>
+
+  <script>
+    async function main() {
+      const pyodide = await loadPyodide();
+      const output = document.getElementById("output");
+      const runButton = document.getElementById("run");
+      const codeArea = document.getElementById("code");
+
+      pyodide.runPython(`
+import sys
+from js import document
+class StdoutCatcher:
+    def write(self, s):
+        document.getElementById("output").textContent += s
+    def flush(self):
+        pass
+sys.stdout = StdoutCatcher()
+sys.stderr = StdoutCatcher()
+      `);
+
+      runButton.onclick = async () => {
+        output.textContent = ""; // очистка
+        try {
+          await pyodide.runPythonAsync(codeArea.value);
+        } catch (err) {
+          output.textContent += "\\n[Ошибка] " + err + "\\n";
+        }
+      };
+    }
+    main();
+  </script>
+</body>
+</html>
